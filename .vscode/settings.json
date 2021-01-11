@@ -52,6 +52,7 @@
         "functional": "cpp",
         "numeric": "cpp",
         "random": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "map": "cpp"
     }
 }

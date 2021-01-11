@@ -13,7 +13,6 @@ vector<int> m, c;
 int findValue(int i, int mem){
     if(mem<0) return -10101010;
     if(i<0) return 0;
-    //cout <<  DP[pst][mem] << endl;
 
     return DP[pst][mem];
 }

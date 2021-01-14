@@ -8,17 +8,17 @@ long long greed[32][32] = {0};
 long long number[32] = {0};
 long long notIncludeNth;
 
-void nBitWays(long long n, long long l, long long i){  
+void backTracking(long long n, long long l, long long i){  
     if(n==0 || l==0) return;    
 
     notIncludeNth = greed[n-1][l];
     
     if(i<=notIncludeNth){
         number[n] = 0;
-        nBitWays(n-1, l, i);
+        backTracking(n-1, l, i);
     }else{
         number[n] = 1;
-        nBitWays(n-1, l-1, i-notIncludeNth);
+        backTracking(n-1, l-1, i-notIncludeNth);
     }   
 }
 
@@ -45,7 +45,7 @@ int main(){
     }
 
     
-    nBitWays(N, L, I);
+    backTracking(N, L, I);
     
     for(int i=N; i>0; i--){
         cout << number[i];

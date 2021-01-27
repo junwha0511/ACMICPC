@@ -2,13 +2,8 @@
 #include<cstdio>
 #include<queue>
 
-#define NONE 10101;
-
 using namespace std;
 
-bool comp(pair<int, int> a, pair<int, int> b){
-    return a.first < b.first;
-}
 vector<pair<int, int>> v[1010];
 priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int,int>>> pq;
 int visited[1010] = {0};

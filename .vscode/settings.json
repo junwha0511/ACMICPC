@@ -54,6 +54,7 @@
         "random": "cpp",
         "iomanip": "cpp",
         "map": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "valarray": "cpp"
     }
 }

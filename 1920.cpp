@@ -7,13 +7,13 @@ using namespace std;
 
 vector<int> v;
 
-bool binarySort(int start, int end, int target){
+bool binarySearch(int start, int end, int target){
     if(start > end) return false;
 
     int mid = (start+end)/2;
     if(target == v[mid]) return true;
-    if(target > v[mid]) return binarySort(mid+1, end, target);
-    else return binarySort(start, mid-1, target);
+    if(target > v[mid]) return binarySearch(mid+1, end, target);
+    else return binarySearch(start, mid-1, target);
 }
 
 int main(){
@@ -33,6 +33,6 @@ int main(){
     cin >> M;
     for(int i=0; i<M; i++){
         cin >> a;
-        cout << (binarySort(0, N-1, a)?1:0) << '\n';
+        cout << (binarySearch(0, N-1, a)?1:0) << '\n';
     }
 }

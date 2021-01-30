@@ -43,11 +43,13 @@ int main(){
     cin.tie(NULL);
     ios_base::sync_with_stdio();
 
-    cin >> N;
-    for(int i=0; i<N; i++){
-        cin >> h[i];
-    }
-
-    cout << solve(0, N-1);
+    while(true){
+        cin >> N;
+        if(N==0) break;
+        for(int i=0; i<N; i++){
+            cin >> h[i];
+        }
+        cout << solve(0, N-1) << '\n';
+    }   
 }
 

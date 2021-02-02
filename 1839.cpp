@@ -11,16 +11,15 @@ void build(){
 }
 
 void update(int n){
-    segTree[n] = 0;
-    for(int i=n; i>0; i/=2) segTree[i] = segTree[i*2]+segTree[i*2+1];
+    segTree[SIZE+n] = 0;
+    for(int i=(SIZE+n)/2; i>0; i/=2) segTree[i] = segTree[i*2]+segTree[i*2+1];
 }   
 
-int frontNum(int n, int start, int end, int targetStart, int targetEnd){
-    if(start>targetEnd || end<targetStart) return 0;
-    if(targetStart<=start && end<=targetEnd) return segTree[n];
-
+int find(int n, int sum, int start, int end){
+    if(start == end) return start;
     int mid = (start+end)/2;
-    return frontNum(n*2, start, mid, targetStart, targetEnd)+frontNum(n*2+1, mid+1, end, targetStart, targetEnd);
+    if(segTree[n*2] <= sum) return find(n*2, sum, start, mid);
+    else return find(n*2+1, sum-segTree[n*2], mid+1, end);
 }
 
 int main(){
@@ -28,17 +27,17 @@ int main(){
     
     int a, sequence[101010];
     
+    cin >> N;
+    segTree[0] = 0;
+    for(int i=1; i<=N; i++) segTree[SIZE+i] = 1;
+    build();
     for(int i=1; i<=N; i++){
         cin >> a;
-        for(int j=0; j<N; j++){
-            if(frontNum(1, 0, SIZE-1, 1, j) == a){
-                sequence[j] = i;
-                update(j);
-                break;
-            }
-        }
+        int k = find(1, a+1, 0, SIZE-1);
+        sequence[k] = i;
+        update(k);
+    
     }
-
-    for(int i=0; i<N; i++) cout << sequence[i];
+    for(int i=1; i<=N; i++) cout << sequence[i] << endl;
 
 }

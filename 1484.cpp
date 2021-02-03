@@ -19,7 +19,7 @@ int main(){
 
     for(lld i=0; i<=200000; i++) v.push_back(i*i);
 
-    int past = 0, now = 0;
+    int past = 1, now = 1;
     bool none = true;
     while(true){
         if(G <=  v[now]-v[past]) past++;

@@ -16,8 +16,8 @@ int main(){
     int cnt = 1;
 
     for(int i=N-2; i>=0; i--){
-        if(arr[N-1] > max){
-            max = arr[N-1];
+        if(arr[i] > max){
+            max = arr[i];
             cnt++;
         }
     }

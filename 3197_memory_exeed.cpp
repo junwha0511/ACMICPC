@@ -20,6 +20,9 @@ melting 로직을 줄여야함
 WILL_BE_MELTING을 유지하면서, 해당 부분에 대해서만 본다면
 O(ice 개수) 안에 모든걸 처리할 수 있음. 즉, state 수에 관계 없이 O(R*C)가 됨
 
+memory 부족... 이 솔루션은 포기해야할듯
+
+백조를 직접 움직여야함
 */
 
 
@@ -54,37 +57,34 @@ inline bool is_reachable_type(Type type) {
 void mark_reachable(Unit **grid, int R, int C, int i, int j) {
     unsigned int *cluster_id = grid[i][j].cluster_id;
     
-    if (i != 0 && grid[i-1][j].cluster_id == nullptr && is_reachable_type(grid[i-1][j].type)) { 
+    if (i != 0 && is_reachable_type(grid[i-1][j].type)) { 
         grid[i-1][j].cluster_id = cluster_id;
         mark_reachable(grid, R, C, i-1, j);
     } 
-    if (i != R-1 && grid[i+1][j].cluster_id == nullptr && is_reachable_type(grid[i+1][j].type)) { 
+    if (i != R-1 && is_reachable_type(grid[i+1][j].type)) { 
         grid[i+1][j].cluster_id = cluster_id;
         mark_reachable(grid, R, C, i+1, j);
     }
-    if (j != 0 && grid[i][j-1].cluster_id == nullptr && is_reachable_type(grid[i][j-1].type)) { 
+    if (j != 0 && is_reachable_type(grid[i][j-1].type)) { 
         grid[i][j-1].cluster_id = cluster_id;
         mark_reachable(grid, R, C, i, j-1);
     }
-    if (j != C-1 && grid[i][j+1].cluster_id == nullptr && is_reachable_type(grid[i][j+1].type)) { 
+    if (j != C-1 && is_reachable_type(grid[i][j+1].type)) { 
         grid[i][j+1].cluster_id = cluster_id;
         mark_reachable(grid, R, C, i, j+1);
     }
 }
 
-inline bool has_water(Type type){
-    return type == SWAN || type == WATER;
-}
 
 inline Unit* find_water_from_surround(Unit **grid, int R, int C, int i, int j) {
-    if (i != 0 && has_water(grid[i-1][j].type)) return &grid[i-1][j];
-    if (i != R-1 && has_water(grid[i+1][j].type)) return &grid[i+1][j];
-    if (j != 0 && has_water(grid[i][j-1].type)) return &grid[i][j-1];
-    if (j != C-1 && has_water(grid[i][j+1].type)) return &grid[i][j+1];
+    if (i != 0 && is_reachable_type(grid[i-1][j].type)) return &grid[i-1][j];
+    if (i != R-1 && is_reachable_type(grid[i+1][j].type)) return &grid[i+1][j];
+    if (j != 0 && is_reachable_type(grid[i][j-1].type)) return &grid[i][j-1];
+    if (j != C-1 && is_reachable_type(grid[i][j+1].type)) return &grid[i][j+1];
     return nullptr;
 }
 
-void cluster(Unit **grid, int R, int C, vector<pair<int, int>>& ices_will_be_melting) { // O(R*C)
+void cluster(Unit **grid, int R, int C, vector<pair<short, short>>& ices_will_be_melting) { // O(R*C)
     unsigned int *ice_cluster_id = new unsigned int;
     *ice_cluster_id = available_cluster_id++; 
     
@@ -106,26 +106,26 @@ void cluster(Unit **grid, int R, int C, vector<pair<int, int>>& ices_will_be_mel
     }
 }
 
-inline bool is_reachable(Unit **grid, pair<int, int> *swans) {
+inline bool is_reachable(Unit **grid, pair<short, short> *swans) {
     return *grid[swans[0].first][swans[0].second].cluster_id == *grid[swans[1].first][swans[1].second].cluster_id;
 }
 
 inline void merge_with_melted_ice(Unit **grid, int R, int C, int i, int j) {
-    if (i != 0 && has_water(grid[i-1][j].type)) { 
+    if (i != 0 && is_reachable_type(grid[i-1][j].type)) { 
         merge(&grid[i-1][j], &grid[i][j]);
     } 
-    if (i != R-1 && has_water(grid[i+1][j].type)) { 
+    if (i != R-1 && is_reachable_type(grid[i+1][j].type)) { 
         merge(&grid[i+1][j], &grid[i][j]);
     } 
-    if (j != 0 && has_water(grid[i][j-1].type)) { 
+    if (j != 0 && is_reachable_type(grid[i][j-1].type)) { 
         merge(&grid[i][j-1], &grid[i][j]);
     } 
-    if (j != C-1 && has_water(grid[i][j+1].type)) { 
+    if (j != C-1 && is_reachable_type(grid[i][j+1].type)) { 
         merge(&grid[i][j+1], &grid[i][j]);
     } 
 }
 
-inline void collect_next_melting_ices(Unit **grid, int R, int C, int i, int j, vector<pair<int, int>> &next) {
+inline void collect_next_melting_ices(Unit **grid, int R, int C, int i, int j, vector<pair<short, short>> &next) {
     if (i != 0 && grid[i-1][j].type == ICE) {
         grid[i-1][j].type = WILL_BE_MELT;
         next.push_back(make_pair(i-1, j));
@@ -144,36 +144,22 @@ inline void collect_next_melting_ices(Unit **grid, int R, int C, int i, int j, v
     }
 }
 
-void melt(Unit **grid, int R, int C, vector<pair<int, int>> &current, vector<pair<int, int>>& next) {
+void melt(Unit **grid, int R, int C, vector<pair<short, short>> &current, vector<pair<short, short>>& next) {
     int i, j;
-    for (pair<int, int> ice_coord : current) {
+    for (pair<short, short> ice_coord : current) {
         i = ice_coord.first;
         j = ice_coord.second;
         Unit *water = find_water_from_surround(grid, R, C, i, j); // Assert non-null
-        if (water == nullptr) {
-            cout << "Assertion failed!\n";
-            return;
-        }
         grid[i][j].type = WATER;
         grid[i][j].cluster_id = water->cluster_id; // get new cluster id
         collect_next_melting_ices(grid, R, C, i, j, next);
     }
     
-   for (pair<int, int> ice_coord : current) {
+   for (pair<short, short> ice_coord : current) {
         i = ice_coord.first;
         j = ice_coord.second; 
         merge_with_melted_ice(grid, R, C, i, j);
    }
-
-   for (pair<int, int> ice_coord : next) {
-        i = ice_coord.first;
-        j = ice_coord.second; 
-        Unit *water = find_water_from_surround(grid, R, C, i, j); // Assert non-null
-        if (water == nullptr) {
-            cout << "(" << i << ", " << j << ") has no water\n";
-        }
-   }
-
    current.clear();
 }
 
@@ -182,7 +168,7 @@ int main() {
     cin.tie(NULL);
 
     int R, C;
-    pair<int, int> swans[2];
+    pair<short, short> swans[2];
     int swan_init_idx = 0;
 
     cin >> R >> C;
@@ -205,28 +191,27 @@ int main() {
         }
     }
 
-    vector<pair<int, int>> ices_will_be_melting[2];
-    int idx = 0;
-
+    vector<pair<short, short>> ices_will_be_melting[2];
+    short idx = 0;
+    
     cluster(grid, R, C, ices_will_be_melting[idx]);
 
-    int days = 0;
-    while(1) {
+    short days;
+    for (days=0; days<1501; days++) { // Days will be at most 1499
         if (is_reachable(grid, swans)) 
             break;
         melt(grid, R, C, ices_will_be_melting[idx], ices_will_be_melting[(idx+1)%2]);
         idx = (idx+1)%2;
-        days++;
     }
 
     cout << days << "\n";
 
     // Destroy
     // TODO: many leaks for cluster id...
-    // for (int i=0; i<R; i++) {
-    //     delete grid[i];
-    // }
-    // delete[] grid;
+    for (int i=0; i<R; i++) {
+        delete grid[i];
+    }
+    delete[] grid;
 
     return 0;
 }

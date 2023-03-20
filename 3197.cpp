@@ -24,27 +24,27 @@
 
 using namespace std;
 
-#define WATER 0
-#define ICE 1
-#define SWAN 2
+#define VISITED 0
+#define WATER 1
+#define ICE 2
+#define WILL_BE_MELT 3
+#define SWAN 4
 
-static int directions[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+static short directions[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
 int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(NULL);
-    
-    int R, C;
-    int swans[2][2];
-    char swan_idx = 0;
-    cin >> R >> C;
-    char grid[1500][1500] = {0,};
-    
-    queue<pair<int, int>> water_queue;
-    queue<pair<int, int>> swan_queue;
-    bool visited[1500][1500] = {false,};
+    // ios::sync_with_stdio(false);
+    // cin.tie(NULL);
 
+    int R, C;
+    short swans[2][2];
+    char swan_idx = 0;
+    int u, v;
+    cin >> R >> C;
+    char **grid = new char*[R];
+    
     for (int i=0; i<R; i++) {
+        grid[i] = new char[C];
         for (int j=0; j<C; j++) {
             char c;
             cin >> c;
@@ -52,64 +52,87 @@ int main() {
                 grid[i][j] = ICE;
             } else if (c == '.') {
                 grid[i][j] = WATER;
-                water_queue.push(make_pair(i, j));
             } else { 
-                water_queue.push(make_pair(i, j));
                 grid[i][j] = WATER;
                 swans[swan_idx][0] = i;
                 swans[swan_idx++][1] = j;
             }
         }
     }
+    
+    
+    queue<pair<short, short>> melting_ices;
 
-    swan_queue.push(make_pair(swans[0][0], swans[0][1]));
-    visited[swans[0][0]][swans[0][1]] = true;
-
-    int days = 0;
-    while (1) { // Days will be at most 1499
-        bool other_swan_found = false;
-
-        queue<pair<int, int>> swan_ice_queue;
-        while (!swan_queue.empty() && !other_swan_found) {
-            pair<int, int> swan_pos = swan_queue.front();
-            swan_queue.pop();
-            for (int k=0; k<4; k++) {
-                int u = swan_pos.first+directions[k][0];
-                int v = swan_pos.second+directions[k][1];
-                if (u >= 0 && u < R && v >= 0 && v < C && !visited[u][v]) {
-                    visited[u][v] = true;
-                    if (u == swans[1][0] && v == swans[1][1]) {
-                        other_swan_found = true;
-                        break;
-                    } else if (grid[u][v] == WATER) {
-                        swan_queue.push(make_pair(u, v));
-                    } else if (grid[u][v] == ICE) {
-                        swan_ice_queue.push(make_pair(u, v));
+    // Construct initial melting ices queue
+    for (int i=0; i<R; i++) {
+        for (int j=0; j<C; j++) {
+            if (grid[i][j] == ICE) {
+                for (int k=0; k<4; k++) {
+                    u = i+directions[k][0];
+                    v = j+directions[k][1];
+                    if (u >= 0 && u < R && v >=0 && v < C) {
+                        if (grid[u][v] == WATER) {
+                            melting_ices.push(make_pair(i, j));
+                            grid[i][j] = WILL_BE_MELT;
+                            break;
+                        }
                     }
                 }
             }
         }
-        if (other_swan_found) {
-            break;
-        }
-        swan_queue = swan_ice_queue;
-
-        int n_water_queue = water_queue.size();
-
-        while (n_water_queue--) {
-            pair<int, int> pos = water_queue.front();
-            water_queue.pop(); 
-            
-            int i = pos.first;
-            int j = pos.second;
+    }
+    
+    grid[swans[0][0]][swans[0][1]] = VISITED;
+    short days = 0;
+    int i, j;
+    queue<pair<int, int>> swan_queue;
+    swan_queue.push(make_pair(swans[0][0], swans[0][1]));
+    for (int n=0; n<1500; n++) { // Days will be at most 1499
+        bool other_swan_found = false;
+        bool is_swan_reinit = false;
+        
+        while (!swan_queue.empty() && !other_swan_found) {
+            pair<int, int> swan_pos = swan_queue.front();
+            swan_queue.pop();
             for (int k=0; k<4; k++) {
-                int u = i+directions[k][0];
-                int v = j+directions[k][1];
-                if (u >= 0 && u < R && v >= 0 && v < C) {
-                    if (grid[u][v] == ICE) {
-                        grid[u][v] = WATER;
-                        water_queue.push(make_pair(u, v));
+                u = swan_pos.first+directions[k][0];
+                v = swan_pos.second+directions[k][1];
+                if (u >= 0 && u < R && v >=0 && v < C) {
+                    if (u == swans[1][0] && v == swans[1][1]) {
+                        other_swan_found = true;
+                        break;
+                    } else if (grid[u][v] == WATER) {
+                        grid[u][v] = VISITED;
+                        swan_queue.push(make_pair(u, v));
                     } 
+                }
+            }
+        }
+        
+        if (other_swan_found) break;
+        
+        int n_melting_ices = melting_ices.size();
+        if (n_melting_ices == 0) break;
+
+        for (int k=0; k<n_melting_ices; k++) {
+            pair<short, short> ice_position = melting_ices.front();
+            melting_ices.pop(); 
+            
+            i = ice_position.first;
+            j = ice_position.second;
+
+            grid[i][j] = WATER;
+            for (int k=0; k<4; k++) {
+                u = i+directions[k][0];
+                v = j+directions[k][1];
+                if (u >= 0 && u < R && v >=0 && v < C) {
+                    if (grid[u][v] == ICE) {
+                        grid[u][v] = WILL_BE_MELT;
+                        melting_ices.push(make_pair(u, v));
+                    } else if (grid[u][v] == VISITED) {
+                        grid[i][j] = VISITED;
+                        swan_queue.push(make_pair(i, j));
+                    }
                 } 
             }
         }
@@ -117,6 +140,12 @@ int main() {
     }
 
     cout << days << "\n";
+
+    // Destroy
+    for (int i=0; i<R; i++) {
+        delete grid[i];
+    }
+    delete[] grid;
 
     return 0;
 }
